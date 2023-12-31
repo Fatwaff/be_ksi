@@ -13,6 +13,7 @@ var (
 	response Response
 	user User
 	billboard Billboard
+	sewa Sewa
 )
 
 func SignUpHandler(MONGOCONNSTRINGENV, dbname string, r *http.Request) string {
@@ -49,7 +50,7 @@ func LogInHandler(PASETOPRIVATEKEYENV, MONGOCONNSTRINGENV, dbname string, r *htt
 		response.Message = err.Error()
 		return GCFReturnStruct(response)
 	}
-	tokenstring, err := Encode(user.ID, user.NamaLengkap, os.Getenv(PASETOPRIVATEKEYENV))
+	tokenstring, err := Encode(user.ID, user.Email, os.Getenv(PASETOPRIVATEKEYENV))
 	if err != nil {
 		response.Message = "Gagal Encode Token : " + err.Error()
 		return GCFReturnStruct(response)
@@ -90,7 +91,7 @@ func TambahBillboardHandler(MONGOCONNSTRINGENV, dbname string, r *http.Request) 
 		response.Message = err.Error()
 		return GCFReturnStruct(response)
 	}
-	if user.NamaLengkap == "admin" {
+	if user.Email != "admin@gmail.com" {
 		response.Message = "Anda tidak memiliki akses"
 		return GCFReturnStruct(response)
 	}
@@ -148,7 +149,7 @@ func EditBillboardHandler(MONGOCONNSTRINGENV, dbname string, r *http.Request) st
 		response.Message = err.Error()
 		return GCFReturnStruct(response)
 	}
-	if user.NamaLengkap == "admin" {
+	if user.Email != "admin@gmail.com" {
 		response.Message = "Anda tidak memiliki akses"
 		return GCFReturnStruct(response)
 	}
@@ -187,7 +188,7 @@ func HapusBillboardHandler(MONGOCONNSTRINGENV, dbname string, r *http.Request) s
 		response.Message = err.Error()
 		return GCFReturnStruct(response)
 	}
-	if user.NamaLengkap == "admin" {
+	if user.Email != "admin@gmail.com" {
 		response.Message = "Anda tidak memiliki akses"
 		return GCFReturnStruct(response)
 	}
@@ -209,5 +210,31 @@ func HapusBillboardHandler(MONGOCONNSTRINGENV, dbname string, r *http.Request) s
 	//
 	response.Status = true
 	response.Message = "Berhasil menghapus billboard"
+	return GCFReturnStruct(response)
+}
+
+//sewa
+func SewaHandler(MONGOCONNSTRINGENV, dbname string, r *http.Request) string {
+	conn := MongoConnect(MONGOCONNSTRINGENV, dbname)
+	response.Status = false
+	//
+	_, err := GetUserLogin(os.Getenv("PASETOPUBLICKEYENV"), r)
+	if err != nil {
+		response.Message = err.Error()
+		return GCFReturnStruct(response)
+	}
+	err = json.NewDecoder(r.Body).Decode(&billboard)
+	if err != nil {
+		response.Message = "error parsing application/json: " + err.Error()
+		return GCFReturnStruct(response)
+	}
+	err = SewaBillboard(conn, sewa)
+	if err != nil {
+		response.Message = err.Error()
+		return GCFReturnStruct(response)
+	}
+	//
+	response.Status = true
+	response.Message = billboard.Kode
 	return GCFReturnStruct(response)
 }

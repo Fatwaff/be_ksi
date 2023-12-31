@@ -260,3 +260,25 @@ func HapusBillboardOlehAdmin(_id primitive.ObjectID, db *mongo.Database) error {
 	}
 	return nil
 }
+
+// sewa
+func SewaBillboard(db *mongo.Database, insertedDoc Sewa) error {
+	if insertedDoc.Billboard.ID == primitive.NilObjectID || insertedDoc.User.ID == primitive.NilObjectID || insertedDoc.Content == "" || insertedDoc.TanggalMulai.IsZero() || insertedDoc.TanggalSelesai.IsZero() {
+		return fmt.Errorf("mohon untuk melengkapi data")
+	}
+	if CheckSewa(db, insertedDoc) {
+		return fmt.Errorf("billboard sudah disewa")
+	}
+	_, err := InsertOneDoc(db, "sewa", insertedDoc)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func CheckSewa(db *mongo.Database, insertedDoc Sewa) bool {
+	collection := db.Collection("sewa")
+	filter := bson.M{"sewa": insertedDoc.ID}
+	err := collection.FindOne(context.Background(), filter).Decode(&Sewa{})
+	return err == nil
+}

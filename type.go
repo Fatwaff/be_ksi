@@ -20,6 +20,8 @@ type User struct {
 type Billboard struct {
 	ID 				primitive.ObjectID 	`bson:"_id,omitempty" json:"_id,omitempty"`
 	Kode 			string				`bson:"kode,omitempty" json:"kode,omitempty"`
+	Nama 			string 				`bson:"nama,omitempty" json:"nama,omitempty"`
+	Gambar 			string 				`bson:"gambar,omitempty" json:"gambar,omitempty"`
 	Panjang 		float64 			`bson:"panjang,omitempty" json:"panjang,omitempty"`
 	Lebar 			float64 			`bson:"lebar,omitempty" json:"lebar,omitempty"`
 	Latitude  		float64 			`bson:"latitude,omitempty" json:"latitude,omitempty"`
@@ -34,7 +36,7 @@ type Sewa struct {
 	Content			string				`bson:"content,omitempty" json:"content,omitempty"`
 	TanggalMulai	time.Time			`bson:"tanggal_mulai,omitempty" json:"tanggal_mulai,omitempty"`
 	TanggalSelesai	time.Time			`bson:"tanggal_selesai,omitempty" json:"tanggal_selesai,omitempty"`
-	Aktif			bool				`bson:"aktif,omitempty" json:"aktif,omitempty"`
+	Status			bool				`bson:"status,omitempty" json:"status,omitempty"`
 }
 
 type Credential struct {
@@ -50,7 +52,7 @@ type Response struct {
 
 type Payload struct {
 	Id   		primitive.ObjectID `json:"id"`
-	NamaLengkap string             `json:"namalengkap"`
+	Email 		string             `json:"email"`
 	Exp  		time.Time          `json:"exp"`
 	Iat  		time.Time          `json:"iat"`
 	Nbf  		time.Time          `json:"nbf"`
