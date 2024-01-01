@@ -282,3 +282,49 @@ func CheckSewa(db *mongo.Database, insertedDoc Sewa) bool {
 	err := collection.FindOne(context.Background(), filter).Decode(&Sewa{})
 	return err == nil
 }
+
+func GetAllSewa(db *mongo.Database) (docs []Sewa, err error) {
+	collection := db.Collection("sewa")
+	filter := bson.M{}
+	cursor, err := collection.Find(context.Background(), filter)
+	if err != nil {
+		return docs, fmt.Errorf("error GetAllSewa: %s", err)
+	}
+	err = cursor.All(context.Background(), &docs)
+	if err != nil {
+		return docs, err
+	}
+	return docs, nil
+}
+
+func GetSewaFromID(_id primitive.ObjectID, db *mongo.Database) (doc Sewa, err error) {
+	collection := db.Collection("sewa")
+	filter := bson.M{"_id": _id}
+	err = collection.FindOne(context.Background(), filter).Decode(&doc)
+	if err != nil {
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			return doc, fmt.Errorf("no data found for ID %s", _id)
+		}
+		return doc, fmt.Errorf("error retrieving data for ID %s: %s", _id, err.Error())
+	}
+	return doc, nil
+}
+
+func EditSewa(_id primitive.ObjectID, db *mongo.Database, insertedDoc Sewa) error {
+	if insertedDoc.Billboard.ID == primitive.NilObjectID || insertedDoc.User.ID == primitive.NilObjectID || insertedDoc.Content == "" || insertedDoc.TanggalMulai.IsZero() || insertedDoc.TanggalSelesai.IsZero() {
+		return fmt.Errorf("mohon untuk melengkapi data")
+	}
+	err := UpdateOneDoc(_id, db, "sewa", insertedDoc)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func HapusSewa(_id primitive.ObjectID, db *mongo.Database) error {
+	err := DeleteOneDoc(_id, db, "sewa")
+	if err != nil {
+		return err
+	}
+	return nil
+}

@@ -223,7 +223,7 @@ func SewaHandler(MONGOCONNSTRINGENV, dbname string, r *http.Request) string {
 		response.Message = err.Error()
 		return GCFReturnStruct(response)
 	}
-	err = json.NewDecoder(r.Body).Decode(&billboard)
+	err = json.NewDecoder(r.Body).Decode(&sewa)
 	if err != nil {
 		response.Message = "error parsing application/json: " + err.Error()
 		return GCFReturnStruct(response)
@@ -235,6 +235,101 @@ func SewaHandler(MONGOCONNSTRINGENV, dbname string, r *http.Request) string {
 	}
 	//
 	response.Status = true
-	response.Message = billboard.Kode
+	response.Message = "Berhasil menyewa billboard " + sewa.Billboard.Kode
+	return GCFReturnStruct(response)
+}
+
+func GetSewaHandler(MONGOCONNSTRINGENV, dbname string, r *http.Request) string {
+	conn := MongoConnect(MONGOCONNSTRINGENV, dbname)
+	response.Status = false
+	//
+	id := GetID(r)
+	if id == "" {
+		sewa, err := GetAllSewa(conn)
+		if err != nil {
+			response.Message = err.Error()
+			return GCFReturnStruct(response)
+		}
+		//
+		return GCFReturnStruct(sewa)
+	}
+	idparam, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		response.Message = err.Error()
+		return GCFReturnStruct(response)
+	}
+	sewa, err := GetSewaFromID(idparam, conn)
+	if err != nil {
+		response.Message = err.Error()
+		return GCFReturnStruct(response)
+	}
+	//
+	response.Status = true
+	response.Message = "Berhasil mendapatkan sewa" 
+	return GCFReturnStruct(sewa)
+}
+
+func EditSewaHandler(MONGOCONNSTRINGENV, dbname string, r *http.Request) string {
+	conn := MongoConnect(MONGOCONNSTRINGENV, dbname)
+	response.Status = false
+	//
+	_, err := GetUserLogin(os.Getenv("PASETOPUBLICKEYENV"), r)
+	if err != nil {
+		response.Message = err.Error()
+		return GCFReturnStruct(response)
+	}
+	id := GetID(r)
+	if id == "" {
+		response.Message = "Wrong parameter"
+		return GCFReturnStruct(response)
+	}
+	idparam, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		response.Message = "Invalid id parameter"
+		return GCFReturnStruct(response)
+	}
+	err = json.NewDecoder(r.Body).Decode(&sewa)
+	if err != nil {
+		response.Message = "error parsing application/json: " + err.Error()
+		return GCFReturnStruct(response)
+	}
+	err = EditSewa(idparam, conn, sewa)
+	if err != nil {
+		response.Message = err.Error()
+		return GCFReturnStruct(response)
+	}
+	//
+	response.Status = true
+	response.Message = "Berhasil mengubah sewa" + sewa.Billboard.Kode
+	return GCFReturnStruct(response)
+}
+
+func HapusSewaHandler(MONGOCONNSTRINGENV, dbname string, r *http.Request) string {
+	conn := MongoConnect(MONGOCONNSTRINGENV, dbname)
+	response.Status = false
+	//
+	_, err := GetUserLogin(os.Getenv("PASETOPUBLICKEYENV"), r)
+	if err != nil {
+		response.Message = err.Error()
+		return GCFReturnStruct(response)
+	}
+	id := GetID(r)
+	if id == "" {
+		response.Message = "Wrong parameter"
+		return GCFReturnStruct(response)
+	}
+	idparam, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		response.Message = "Invalid id parameter"
+		return GCFReturnStruct(response)
+	}
+	err = HapusSewa(idparam, conn)
+	if err != nil {
+		response.Message = err.Error()
+		return GCFReturnStruct(response)
+	}
+	//
+	response.Status = true
+	response.Message = "Berhasil menghapus sewa" + sewa.Billboard.Kode
 	return GCFReturnStruct(response)
 }
