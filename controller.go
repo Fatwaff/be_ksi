@@ -208,7 +208,17 @@ func TambahBillboardOlehAdmin(db *mongo.Database, insertedDoc Billboard) error {
 	if CheckLatitudeLongitude(db, insertedDoc) {
 		return fmt.Errorf("billboard sudah terdaftar")
 	}
-	_, err := InsertOneDoc(db, "billboard", insertedDoc)
+	user := bson.M{
+		"kode": insertedDoc.Kode,
+		"nama":    insertedDoc.Nama,
+		"gambar": insertedDoc.Gambar,
+		"panjang":    insertedDoc.Panjang,
+		"lebar": insertedDoc.Lebar,
+		"latitude":     insertedDoc.Latitude,
+		"longitude":      insertedDoc.Longitude,
+		"lokasi": insertedDoc.Lokasi,
+	}
+	_, err := InsertOneDoc(db, "billboard", user)
 	if err != nil {
 		return err
 	}
@@ -269,7 +279,15 @@ func SewaBillboard(db *mongo.Database, insertedDoc Sewa) error {
 	if CheckSewa(db, insertedDoc) {
 		return fmt.Errorf("billboard sudah disewa")
 	}
-	_, err := InsertOneDoc(db, "sewa", insertedDoc)
+	user := bson.M{
+		"billboard": insertedDoc.Billboard.ID,
+		"user":    insertedDoc.User.ID,
+		"content": insertedDoc.Content,
+		"tanggal_mulai":     insertedDoc.TanggalMulai,
+		"tanggal_selesai":      insertedDoc.TanggalSelesai,
+		"status": insertedDoc.Status,
+	}
+	_, err := InsertOneDoc(db, "sewa", user)
 	if err != nil {
 		return err
 	}
