@@ -107,11 +107,11 @@ func GetProfileHandler(PASETOPUBLICKEYENV, MONGOCONNSTRINGENV, dbname string, r 
 	return GCFReturnStruct(responData)
 }
 
-func TambahBillboardHandler(MONGOCONNSTRINGENV, dbname string, r *http.Request) string {
+func TambahBillboardHandler(PASETOPUBLICKEYENV, MONGOCONNSTRINGENV, dbname string, r *http.Request) string {
 	conn := MongoConnect(MONGOCONNSTRINGENV, dbname)
 	response.Status = 400
 	//
-	user, err := GetUserLogin(os.Getenv("PASETOPUBLICKEYENV"), r)
+	user, err := GetUserLogin(PASETOPUBLICKEYENV, r)
 	if err != nil {
 		response.Message = err.Error()
 		return GCFReturnStruct(response)
@@ -176,11 +176,11 @@ func GetBillboarHandler(MONGOCONNSTRINGENV, dbname string, r *http.Request) stri
 	return GCFReturnStruct(responData)
 }
 
-func EditBillboardHandler(MONGOCONNSTRINGENV, dbname string, r *http.Request) string {
+func EditBillboardHandler(PASETOPUBLICKEYENV, MONGOCONNSTRINGENV, dbname string, r *http.Request) string {
 	conn := MongoConnect(MONGOCONNSTRINGENV, dbname)
 	response.Status = 400
 	//
-	user, err := GetUserLogin(os.Getenv("PASETOPUBLICKEYENV"), r)
+	user, err := GetUserLogin(PASETOPUBLICKEYENV, r)
 	if err != nil {
 		response.Message = err.Error()
 		return GCFReturnStruct(response)
@@ -215,11 +215,11 @@ func EditBillboardHandler(MONGOCONNSTRINGENV, dbname string, r *http.Request) st
 	return GCFReturnStruct(responData)
 }
 
-func HapusBillboardHandler(MONGOCONNSTRINGENV, dbname string, r *http.Request) string {
+func HapusBillboardHandler(PASETOPUBLICKEYENV, MONGOCONNSTRINGENV, dbname string, r *http.Request) string {
 	conn := MongoConnect(MONGOCONNSTRINGENV, dbname)
 	response.Status = 400
 	//
-	user, err := GetUserLogin(os.Getenv("PASETOPUBLICKEYENV"), r)
+	user, err := GetUserLogin(PASETOPUBLICKEYENV, r)
 	if err != nil {
 		response.Message = err.Error()
 		return GCFReturnStruct(response)
@@ -250,11 +250,11 @@ func HapusBillboardHandler(MONGOCONNSTRINGENV, dbname string, r *http.Request) s
 }
 
 //sewa
-func SewaHandler(MONGOCONNSTRINGENV, dbname string, r *http.Request) string {
+func SewaHandler(PASETOPUBLICKEYENV, MONGOCONNSTRINGENV, dbname string, r *http.Request) string {
 	conn := MongoConnect(MONGOCONNSTRINGENV, dbname)
 	response.Status = 400
 	//
-	user, err := GetUserLogin(os.Getenv("PASETOPUBLICKEYENV"), r)
+	user, err := GetUserLogin(PASETOPUBLICKEYENV, r)
 	if err != nil {
 		response.Message = err.Error()
 		return GCFReturnStruct(response)
@@ -285,11 +285,11 @@ func SewaHandler(MONGOCONNSTRINGENV, dbname string, r *http.Request) string {
 	return GCFReturnStruct(responData)
 }
 
-func GetSewaHandler(MONGOCONNSTRINGENV, dbname string, r *http.Request) string {
+func GetSewaHandler(PASETOPUBLICKEYENV, MONGOCONNSTRINGENV, dbname string, r *http.Request) string {
 	conn := MongoConnect(MONGOCONNSTRINGENV, dbname)
 	response.Status = 400
 	//
-	user, err := GetUserLogin(os.Getenv("PASETOPUBLICKEYENV"), r)
+	user, err := GetUserLogin(PASETOPUBLICKEYENV, r)
 	if err != nil {
 		response.Message = err.Error()
 		return GCFReturnStruct(response)
@@ -345,11 +345,11 @@ func GetSewaHandler(MONGOCONNSTRINGENV, dbname string, r *http.Request) string {
 	return GCFReturnStruct(responData)
 }
 
-func EditSewaHandler(MONGOCONNSTRINGENV, dbname string, r *http.Request) string {
+func EditSewaHandler(PASETOPUBLICKEYENV, MONGOCONNSTRINGENV, dbname string, r *http.Request) string {
 	conn := MongoConnect(MONGOCONNSTRINGENV, dbname)
 	response.Status = 400
 	//
-	user, err := GetUserLogin(os.Getenv("PASETOPUBLICKEYENV"), r)
+	user, err := GetUserLogin(PASETOPUBLICKEYENV, r)
 	if err != nil {
 		response.Message = err.Error()
 		return GCFReturnStruct(response)
@@ -380,11 +380,11 @@ func EditSewaHandler(MONGOCONNSTRINGENV, dbname string, r *http.Request) string 
 	return GCFReturnStruct(responData)
 }
 
-func HapusSewaHandler(MONGOCONNSTRINGENV, dbname string, r *http.Request) string {
+func HapusSewaHandler(PASETOPUBLICKEYENV, MONGOCONNSTRINGENV, dbname string, r *http.Request) string {
 	conn := MongoConnect(MONGOCONNSTRINGENV, dbname)
 	response.Status = 400
 	//
-	user, err := GetUserLogin(os.Getenv("PASETOPUBLICKEYENV"), r)
+	user, err := GetUserLogin(PASETOPUBLICKEYENV, r)
 	if err != nil {
 		response.Message = err.Error()
 		return GCFReturnStruct(response)
@@ -406,6 +406,6 @@ func HapusSewaHandler(MONGOCONNSTRINGENV, dbname string, r *http.Request) string
 	}
 	//
 	response.Status = 204
-	response.Message = "Berhasil batal sewa"
+	response.Message = "Sewa dibatalkan"
 	return GCFReturnStruct(response)
 }
