@@ -95,12 +95,7 @@ func TambahBillboardHandler(MONGOCONNSTRINGENV, dbname string, r *http.Request) 
 		response.Message = "Anda tidak memiliki akses"
 		return GCFReturnStruct(response)
 	}
-	err = json.NewDecoder(r.Body).Decode(&billboard)
-	if err != nil {
-		response.Message = "error parsing application/json: " + err.Error()
-		return GCFReturnStruct(response)
-	}
-	err = TambahBillboardOlehAdmin(conn, billboard)
+	err = TambahBillboardOlehAdmin(conn, r)
 	if err != nil {
 		response.Message = err.Error()
 		return GCFReturnStruct(response)
@@ -163,12 +158,7 @@ func EditBillboardHandler(MONGOCONNSTRINGENV, dbname string, r *http.Request) st
 		response.Message = "Invalid id parameter"
 		return GCFReturnStruct(response)
 	}
-	err = json.NewDecoder(r.Body).Decode(&billboard)
-	if err != nil {
-		response.Message = "error parsing application/json: " + err.Error()
-		return GCFReturnStruct(response)
-	}
-	err = EditBillboardOlehAdmin(idparam, conn, billboard)
+	err = EditBillboardOlehAdmin(idparam, conn, r)
 	if err != nil {
 		response.Message = err.Error()
 		return GCFReturnStruct(response)
@@ -218,17 +208,22 @@ func SewaHandler(MONGOCONNSTRINGENV, dbname string, r *http.Request) string {
 	conn := MongoConnect(MONGOCONNSTRINGENV, dbname)
 	response.Status = false
 	//
-	_, err := GetUserLogin(os.Getenv("PASETOPUBLICKEYENV"), r)
+	user, err := GetUserLogin(os.Getenv("PASETOPUBLICKEYENV"), r)
 	if err != nil {
 		response.Message = err.Error()
 		return GCFReturnStruct(response)
 	}
-	err = json.NewDecoder(r.Body).Decode(&sewa)
-	if err != nil {
-		response.Message = "error parsing application/json: " + err.Error()
+	id := GetID(r)
+	if id == "" {
+		response.Message = "Wrong parameter"
 		return GCFReturnStruct(response)
 	}
-	err = SewaBillboard(conn, sewa)
+	idbilllboard, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		response.Message = "Invalid id parameter"
+		return GCFReturnStruct(response)
+	}
+	err = SewaBillboard(idbilllboard, user.Id, conn, r)
 	if err != nil {
 		response.Message = err.Error()
 		return GCFReturnStruct(response)
@@ -273,7 +268,7 @@ func EditSewaHandler(MONGOCONNSTRINGENV, dbname string, r *http.Request) string 
 	conn := MongoConnect(MONGOCONNSTRINGENV, dbname)
 	response.Status = false
 	//
-	_, err := GetUserLogin(os.Getenv("PASETOPUBLICKEYENV"), r)
+	user, err := GetUserLogin(os.Getenv("PASETOPUBLICKEYENV"), r)
 	if err != nil {
 		response.Message = err.Error()
 		return GCFReturnStruct(response)
@@ -288,12 +283,7 @@ func EditSewaHandler(MONGOCONNSTRINGENV, dbname string, r *http.Request) string 
 		response.Message = "Invalid id parameter"
 		return GCFReturnStruct(response)
 	}
-	err = json.NewDecoder(r.Body).Decode(&sewa)
-	if err != nil {
-		response.Message = "error parsing application/json: " + err.Error()
-		return GCFReturnStruct(response)
-	}
-	err = EditSewa(idparam, conn, sewa)
+	err = EditSewa(idparam, user.Id, conn, r)
 	if err != nil {
 		response.Message = err.Error()
 		return GCFReturnStruct(response)
@@ -308,7 +298,7 @@ func HapusSewaHandler(MONGOCONNSTRINGENV, dbname string, r *http.Request) string
 	conn := MongoConnect(MONGOCONNSTRINGENV, dbname)
 	response.Status = false
 	//
-	_, err := GetUserLogin(os.Getenv("PASETOPUBLICKEYENV"), r)
+	user, err := GetUserLogin(os.Getenv("PASETOPUBLICKEYENV"), r)
 	if err != nil {
 		response.Message = err.Error()
 		return GCFReturnStruct(response)
@@ -323,13 +313,13 @@ func HapusSewaHandler(MONGOCONNSTRINGENV, dbname string, r *http.Request) string
 		response.Message = "Invalid id parameter"
 		return GCFReturnStruct(response)
 	}
-	err = HapusSewa(idparam, conn)
+	err = HapusSewa(idparam, user.Id, conn)
 	if err != nil {
 		response.Message = err.Error()
 		return GCFReturnStruct(response)
 	}
 	//
 	response.Status = true
-	response.Message = "Berhasil menghapus sewa" + sewa.Billboard.Kode
+	response.Message = "Berhasil menghapus sewa"
 	return GCFReturnStruct(response)
 }

@@ -26,7 +26,10 @@ type Billboard struct {
 	Lebar 			float64 			`bson:"lebar,omitempty" json:"lebar,omitempty"`
 	Latitude  		float64 			`bson:"latitude,omitempty" json:"latitude,omitempty"`
 	Longitude 		float64 			`bson:"longitude,omitempty" json:"longitude,omitempty"`
-	Lokasi 			string 				`bson:"lokasi,omitempty" json:"lokasi,omitempty"`
+	Address 		string 				`bson:"address,omitempty" json:"address,omitempty"`
+	Regency 		string 				`bson:"regency,omitempty" json:"regency,omitempty"`
+	District 		string 				`bson:"district,omitempty" json:"district,omitempty"`
+	Village 		string 				`bson:"village,omitempty" json:"village,omitempty"`
 }
 
 type Sewa struct {
@@ -34,8 +37,8 @@ type Sewa struct {
 	Billboard		Billboard			`bson:"billboard,omitempty" json:"billboard,omitempty"`
 	User			User				`bson:"user,omitempty" json:"user,omitempty"`
 	Content			string				`bson:"content,omitempty" json:"content,omitempty"`
-	TanggalMulai	time.Time			`bson:"tanggal_mulai,omitempty" json:"tanggal_mulai,omitempty"`
-	TanggalSelesai	time.Time			`bson:"tanggal_selesai,omitempty" json:"tanggal_selesai,omitempty"`
+	TanggalMulai	string				`bson:"tanggal_mulai,omitempty" json:"tanggal_mulai,omitempty"`
+	TanggalSelesai	string				`bson:"tanggal_selesai,omitempty" json:"tanggal_selesai,omitempty"`
 	Status			bool				`bson:"status,omitempty" json:"status,omitempty"`
 }
 
