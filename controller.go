@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"net/http"
 	"os"
-	"strconv"
 	"strings"
 
 	"github.com/badoux/checkmail"
@@ -111,6 +110,19 @@ func GetUserFromEmail(email string, db *mongo.Database) (doc User, err error) {
 	return doc, nil
 }
 
+func GetUserFromKTP(ktp string, db *mongo.Database) (doc User, err error) {
+	collection := db.Collection("user")
+	filter := bson.M{"ktp": ktp}
+	err = collection.FindOne(context.Background(), filter).Decode(&doc)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			return doc, fmt.Errorf("ktp tidak ditemukan")
+		}
+		return doc, fmt.Errorf("kesalahan server")
+	}
+	return doc, nil
+}
+
 // get user login
 func GetUserLogin(PASETOPUBLICKEYENV string, r *http.Request) (Payload, error) {
 	tokenstring := r.Header.Get("Authorization")
@@ -133,30 +145,34 @@ func GCFReturnStruct(DataStuct any) string {
 }
 
 // register
-func SignUp(db *mongo.Database, insertedDoc User) error {
+func SignUp(db *mongo.Database, insertedDoc User) (string, error) {
 	if insertedDoc.NamaLengkap == "" || insertedDoc.Email == "" || insertedDoc.Password == "" || insertedDoc.NoHp == "" || insertedDoc.KTP == "" {
-		return fmt.Errorf("mohon untuk melengkapi data")
+		return "", fmt.Errorf("mohon untuk melengkapi data")
 	}
 	if err := checkmail.ValidateFormat(insertedDoc.Email); err != nil {
-		return fmt.Errorf("email tidak valid")
+		return "", fmt.Errorf("email tidak valid")
 	}
 	userExists, _ := GetUserFromEmail(insertedDoc.Email, db)
 	if insertedDoc.Email == userExists.Email {
-		return fmt.Errorf("email sudah terdaftar")
+		return "", fmt.Errorf("email sudah terdaftar")
+	}
+	userExists, _ = GetUserFromKTP(insertedDoc.KTP, db)
+	if insertedDoc.KTP == userExists.KTP {
+		return "", fmt.Errorf("ktp sudah terdaftar")
 	}
 	if insertedDoc.Confirmpassword != insertedDoc.Password {
-		return fmt.Errorf("konfirmasi password salah")
+		return "", fmt.Errorf("konfirmasi password salah")
 	}
 	if strings.Contains(insertedDoc.Password, " ") {
-		return fmt.Errorf("password tidak boleh mengandung spasi")
+		return "", fmt.Errorf("password tidak boleh mengandung spasi")
 	}
 	if len(insertedDoc.Password) < 8 {
-		return fmt.Errorf("password terlalu pendek")
+		return "", fmt.Errorf("password terlalu pendek")
 	}
 	salt := make([]byte, 16)
 	_, err := rand.Read(salt)
 	if err != nil {
-		return fmt.Errorf("kesalahan server : salt")
+		return "", fmt.Errorf("kesalahan server : salt")
 	}
 	hashedPassword := argon2.IDKey([]byte(insertedDoc.Password), salt, 1, 64*1024, 4, 32)
 	user := bson.M{
@@ -169,9 +185,9 @@ func SignUp(db *mongo.Database, insertedDoc User) error {
 	}
 	_, err = InsertOneDoc(db, "user", user)
 	if err != nil {
-		return err
+		return "", err
 	}
-	return nil
+	return insertedDoc.Email, nil
 }
 
 // login
@@ -198,7 +214,7 @@ func LogIn(db *mongo.Database, insertedDoc User) (user User, err error) {
 }
 
 // billboard
-func GetBillboard (db *mongo.Database, r *http.Request) (docs []bson.M, err error) {
+func GetBillboard (db *mongo.Database) (docs []bson.M, err error) {
 	billboard, err := GetAllBillboard(db)
 	if err != nil {
 		return docs, err
@@ -229,7 +245,7 @@ func GetBillboard (db *mongo.Database, r *http.Request) (docs []bson.M, err erro
 
 }
 
-func CheckLatitudeLongitude(db *mongo.Database, latitude, longitude float64) bool {
+func CheckLatitudeLongitude(db *mongo.Database, latitude, longitude string) bool {
 	collection := db.Collection("billboard")
 	filter := bson.M{"latitude": latitude, "longitude": longitude}
 	err := collection.FindOne(context.Background(), filter).Decode(&Billboard{})
@@ -243,57 +259,42 @@ func CheckKode(db *mongo.Database, kode string) bool {
 	return err == nil
 }
 
-func TambahBillboardOlehAdmin(db *mongo.Database, r *http.Request ) error {
+func TambahBillboardOlehAdmin(db *mongo.Database, r *http.Request ) (bson.M, error) {
 	kode := r.FormValue("kode")
 	nama := r.FormValue("nama")
-	panjang, err := strconv.ParseFloat(r.FormValue("panjang"), 64)
-	if err != nil {
-		return fmt.Errorf("error parsing float 1: %s", err.Error())
-	}
-	lebar, err := strconv.ParseFloat(r.FormValue("lebar"), 64)
-	if err != nil {
-		return fmt.Errorf("error parsing float 2: %s", err.Error())
-	} 
-	latitude, err := strconv.ParseFloat(r.FormValue("latitude"), 64)
-	if err != nil {
-		return fmt.Errorf("error parsing float 3: %s", err.Error())
-	}
-	longitude, err := strconv.ParseFloat(r.FormValue("longitude"), 64)
-	if err != nil {
-		return fmt.Errorf("error parsing float 4: %s", err.Error())
-	} 
+	panjang := r.FormValue("panjang")
+	lebar := r.FormValue("lebar")
+	harga := r.FormValue("harga")
+	latitude := r.FormValue("latitude")
+	longitude := r.FormValue("longitude") 
 	address := r.FormValue("address")
 	regency := r.FormValue("regency")
 	district := r.FormValue("district")
 	village := r.FormValue("village")
 
-	gambar := r.FormValue("gambar")
-
-	if kode == "" || nama == "" || panjang == 0 || lebar == 0 || latitude == 0 || longitude == 0 || address == "" || regency == "" || district == "" || village == "" {
-		return fmt.Errorf("mohon untuk melengkapi data")
+	if kode == "" || nama == "" || panjang == "" || lebar == "" || harga == "" || latitude == "" || longitude == "" || address == "" || regency == "" || district == "" || village == "" {
+		return bson.M{}, fmt.Errorf("mohon untuk melengkapi data")
 	}
 	if CheckLatitudeLongitude(db, latitude, longitude) {
-		return fmt.Errorf("billboard sudah terdaftar")
+		return bson.M{}, fmt.Errorf("billboard sudah terdaftar")
 	}
 	if CheckKode(db, kode) {
-		return fmt.Errorf("kode sudah ada")
+		return bson.M{}, fmt.Errorf("kode sudah ada")
 	}
 
-	if gambar != "" {
-		imageUrl = gambar
-	} else {
-		imageUrl, err = intermoni.SaveFileToGithub("Fatwaff", "fax.mp4@gmail.com", "bk-image", "ksi" ,r)
-		if err != nil {
-			return fmt.Errorf("error save file: %s", err)
-		}
+	imageUrl, err := intermoni.SaveFileToGithub("Fatwaff", "fax.mp4@gmail.com", "bk-image", "ksi", r)
+	if err != nil {
+		return bson.M{}, fmt.Errorf("error save file: %s", err)
 	}
 
 	billboard := bson.M{
+		"_id" : primitive.NewObjectID(),
 		"kode": kode,
 		"nama": nama,
 		"gambar": imageUrl,
 		"panjang": panjang,
 		"lebar": lebar,
+		"harga": harga,
 		"latitude": latitude,
 		"longitude": longitude,
 		"address": address,
@@ -303,9 +304,9 @@ func TambahBillboardOlehAdmin(db *mongo.Database, r *http.Request ) error {
 	}
 	_, err = InsertOneDoc(db, "billboard", billboard)
 	if err != nil {
-		return err
+		return bson.M{}, err
 	}
-	return nil
+	return billboard, nil
 }
 
 func GetAllBillboard(db *mongo.Database) (docs []Billboard, err error) {
@@ -335,51 +336,45 @@ func GetBillboardFromID(_id primitive.ObjectID, db *mongo.Database) (doc Billboa
 	return doc, nil
 }
 
-func EditBillboardOlehAdmin(_id primitive.ObjectID, db *mongo.Database, r *http.Request) error {
+func EditBillboardOlehAdmin(_id primitive.ObjectID, db *mongo.Database, r *http.Request) (bson.M, error) {
+	if CheckSewa(db, _id) {
+		return bson.M{}, fmt.Errorf("billboard sedang disewa")
+	}
 	kode := r.FormValue("kode")
 	nama := r.FormValue("nama")
-	panjang, err := strconv.ParseFloat(r.FormValue("panjang"), 64)
-	if err != nil {
-		return fmt.Errorf("error parsing float 1: %s", err.Error())
-	}
-	lebar, err := strconv.ParseFloat(r.FormValue("lebar"), 64)
-	if err != nil {
-		return fmt.Errorf("error parsing float 2: %s", err.Error())
-	} 
-	latitude, err := strconv.ParseFloat(r.FormValue("latitude"), 64)
-	if err != nil {
-		return fmt.Errorf("error parsing float 3: %s", err.Error())
-	}
-	longitude, err := strconv.ParseFloat(r.FormValue("longitude"), 64)
-	if err != nil {
-		return fmt.Errorf("error parsing float 4: %s", err.Error())
-	} 
+	panjang := r.FormValue("panjang")
+	lebar := r.FormValue("lebar")
+	harga := r.FormValue("harga")
+	latitude := r.FormValue("latitude")
+	longitude := r.FormValue("longitude")
 	address := r.FormValue("address")
 	regency := r.FormValue("regency")
 	district := r.FormValue("district")
 	village := r.FormValue("village")
 
-	gambar := r.FormValue("gambar")
+	gambar := r.FormValue("file")
 
-	if kode == "" || nama == "" || panjang == 0 || lebar == 0 || latitude == 0 || longitude == 0 || address == "" || regency == "" || district == "" || village == "" {
-		return fmt.Errorf("mohon untuk melengkapi data")
+	if kode == "" || nama == "" || panjang == "" || lebar == "" || harga == "" || latitude == "" || longitude == "" || address == "" || regency == "" || district == "" || village == "" {
+		return bson.M{}, fmt.Errorf("mohon untuk melengkapi data")
 	}
 
 	if gambar != "" {
 		imageUrl = gambar
 	} else {
-		imageUrl, err = intermoni.SaveFileToGithub("Fatwaff", "fax.mp4@gmail.com", "bk-image", "ksi" ,r)
+		imageUrl, err := intermoni.SaveFileToGithub("Fatwaff", "fax.mp4@gmail.com", "bk-image", "ksi" ,r)
 		if err != nil {
-			return fmt.Errorf("error save file: %s", err)
+			return bson.M{}, fmt.Errorf("error save file: %s", err)
 		}
+		gambar = imageUrl
 	}
 
 	billboard := bson.M{
 		"kode": kode,
 		"nama": nama,
-		"gambar": imageUrl,
+		"gambar": gambar,
 		"panjang": panjang,
 		"lebar": lebar,
+		"harga": harga,
 		"latitude": latitude,
 		"longitude": longitude,
 		"address": address,
@@ -387,15 +382,18 @@ func EditBillboardOlehAdmin(_id primitive.ObjectID, db *mongo.Database, r *http.
 		"district": district,
 		"village": village,
 	}
-	err = UpdateOneDoc(_id, db, "billboard", billboard)
+	err := UpdateOneDoc(_id, db, "billboard", billboard)
 	if err != nil {
-		return err
+		return bson.M{}, err
 	}
-	return nil
+	return billboard, nil
 }
 
 func HapusBillboardOlehAdmin(_id primitive.ObjectID, db *mongo.Database) error {
 	err := DeleteOneDoc(_id, db, "billboard")
+	if CheckSewa(db, _id) {
+		return fmt.Errorf("billboard sedang disewa")
+	}
 	if err != nil {
 		return err
 	}
@@ -403,36 +401,30 @@ func HapusBillboardOlehAdmin(_id primitive.ObjectID, db *mongo.Database) error {
 }
 
 // sewa
-func SewaBillboard(idbilllboard, iduser primitive.ObjectID, db *mongo.Database, r *http.Request) error {
+func SewaBillboard(idbilllboard, iduser primitive.ObjectID, db *mongo.Database, r *http.Request) (bson.M, error) {
 	tanggal_mulai := r.FormValue("tanggal_mulai")
 	tanggal_selesai := r.FormValue("tanggal_mulai") 
 
-	gambar := r.FormValue("gambar")
-
 	if tanggal_mulai == "" || tanggal_selesai == "" {
-		return fmt.Errorf("mohon untuk melengkapi data")
+		return bson.M{}, fmt.Errorf("mohon untuk melengkapi data")
 	}
 	if CheckSewa(db, idbilllboard) {
-		return fmt.Errorf("billboard sudah disewa")
+		return bson.M{}, fmt.Errorf("billboard sudah disewa")
 	}
 	user, err := GetUserFromID(iduser, db)
 	if err != nil {
-		return fmt.Errorf("user tidak ditemukan")
+		return bson.M{}, fmt.Errorf("user tidak ditemukan")
 	}
 	billboard, err := GetBillboardFromID(idbilllboard, db)
 	if err != nil {
-		return fmt.Errorf("billboard tidak ditemukan")
+		return bson.M{}, fmt.Errorf("billboard tidak ditemukan")
 	}
-
-	if gambar != "" {
-		imageUrl = gambar
-	} else {
-		imageUrl, err = intermoni.SaveFileToGithub("Fatwaff", "fax.mp4@gmail.com", "bk-image", "ksi" ,r)
-		if err != nil {
-			return fmt.Errorf("error save file: %s", err)
-		}
+	imageUrl, err = intermoni.SaveFileToGithub("Fatwaff", "fax.mp4@gmail.com", "bk-image", "ksi", r)
+	if err != nil {
+		return bson.M{}, fmt.Errorf("error save file: %s", err)
 	}
 	sewa := bson.M{
+		"_id" : primitive.NewObjectID(),
 		"billboard": bson.M{
 			"_id": billboard.ID,
 		},
@@ -446,9 +438,9 @@ func SewaBillboard(idbilllboard, iduser primitive.ObjectID, db *mongo.Database, 
 	}
 	_, err = InsertOneDoc(db, "sewa", sewa)
 	if err != nil {
-		return err
+		return bson.M{}, err
 	}
-	return nil
+	return sewa, nil
 }
 
 func CheckSewa(db *mongo.Database, idbilllboard primitive.ObjectID) bool {
@@ -458,74 +450,112 @@ func CheckSewa(db *mongo.Database, idbilllboard primitive.ObjectID) bool {
 	return err == nil
 }
 
-func GetAllSewa(db *mongo.Database) (docs []Sewa, err error) {
+func GetAllSewa(db *mongo.Database) (sewa []Sewa, err error) {
 	collection := db.Collection("sewa")
 	filter := bson.M{}
 	cursor, err := collection.Find(context.Background(), filter)
 	if err != nil {
-		return docs, fmt.Errorf("error GetAllSewa: %s", err)
+		return sewa, fmt.Errorf("error GetAllSewa: %s", err)
 	}
-	err = cursor.All(context.Background(), &docs)
+	err = cursor.All(context.Background(), &sewa)
 	if err != nil {
-		return docs, err
+		return sewa, err
 	}
-	return docs, nil
+	for _, s := range sewa {
+		billboard, err := GetBillboardFromID(s.Billboard.ID, db)
+		if err != nil {
+			return sewa, fmt.Errorf("billboard tidak ditemukan")
+		}
+		user, err := GetUserFromID(s.User.ID, db)
+		if err != nil {
+			return sewa, fmt.Errorf("user tidak ditemukan")
+		}
+		s.Billboard = billboard
+		s.User = user
+		sewa = append(sewa, s)
+		sewa = sewa[1:]
+	}
+	return sewa, nil
 }
 
-func GetSewaFromID(_id primitive.ObjectID, db *mongo.Database) (doc Sewa, err error) {
+func GetSewaFromID(_id primitive.ObjectID, db *mongo.Database) (sewa Sewa, err error) {
 	collection := db.Collection("sewa")
 	filter := bson.M{"_id": _id}
-	err = collection.FindOne(context.Background(), filter).Decode(&doc)
+	err = collection.FindOne(context.Background(), filter).Decode(&sewa)
 	if err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
-			return doc, fmt.Errorf("no data found for ID %s", _id)
+			return sewa, fmt.Errorf("no data found for ID %s", _id)
 		}
-		return doc, fmt.Errorf("error retrieving data for ID %s: %s", _id, err.Error())
+		return sewa, fmt.Errorf("error retrieving data for ID %s: %s", _id, err.Error())
 	}
-	return doc, nil
+	billboard, err := GetBillboardFromID(sewa.Billboard.ID, db)
+	if err != nil {
+		return sewa, fmt.Errorf("billboard tidak ditemukan")
+	}
+	user, err := GetUserFromID(sewa.User.ID, db)
+	if err != nil {
+		return sewa, fmt.Errorf("user tidak ditemukan")
+	}
+	sewa.Billboard = billboard
+	sewa.User = user
+	return sewa, nil
 }
 
-func GetAllSewaByUser(iduser primitive.ObjectID, db *mongo.Database) (docs []Sewa, err error) {
+func GetAllSewaByUser(iduser primitive.ObjectID, db *mongo.Database) (sewa []Sewa, err error) {
 	collection := db.Collection("sewa")
 	filter := bson.M{"user._id": iduser}
 	cursor, err := collection.Find(context.Background(), filter)
 	if err != nil {
-		return docs, fmt.Errorf("error GetAllSewaByUser: %s", err)
+		return sewa, fmt.Errorf("error GetAllSewaByUser: %s", err)
 	}
-	err = cursor.All(context.Background(), &docs)
+	err = cursor.All(context.Background(), &sewa)
 	if err != nil {
-		return docs, err
+		return sewa, err
 	}
-	return docs, nil
+	for _, s := range sewa {
+		billboard, err := GetBillboardFromID(s.Billboard.ID, db)
+		if err != nil {
+			return sewa, fmt.Errorf("billboard tidak ditemukan")
+		}
+		user, err := GetUserFromID(s.User.ID, db)
+		if err != nil {
+			return sewa, fmt.Errorf("user tidak ditemukan")
+		}
+		s.Billboard = billboard
+		s.User = user
+		sewa = append(sewa, s)
+		sewa = sewa[1:]
+	}
+	return sewa, nil
 }
 
-func EditSewa(idparam, iduser primitive.ObjectID, db *mongo.Database, r *http.Request) error {
+func EditSewa(idparam, iduser primitive.ObjectID, db *mongo.Database, r *http.Request) (bson.M ,error) {
 	tanggal_mulai := r.FormValue("tanggal_mulai")
 	tanggal_selesai := r.FormValue("tanggal_mulai") 
 
-	gambar := r.FormValue("gambar")
+	gambar := r.FormValue("file")
 
 	if tanggal_mulai == "" || tanggal_selesai == "" {
-		return fmt.Errorf("mohon untuk melengkapi data")
+		return bson.M{}, fmt.Errorf("mohon untuk melengkapi data")
 	}
 	
 	sewa, err := GetSewaFromID(idparam, db)
 	if err != nil {
-		return fmt.Errorf("sewa tidak ditemukan")
+		return bson.M{}, fmt.Errorf("sewa tidak ditemukan")
 	}
 
 	user, err := GetUserFromID(iduser, db)
 	if err != nil {
-		return fmt.Errorf("user tidak ditemukan")
+		return bson.M{}, fmt.Errorf("user tidak ditemukan")
 	}
 
 	if sewa.User.ID != user.ID {
-		return fmt.Errorf("kamu tidak memiliki akses")
+		return bson.M{}, fmt.Errorf("kamu tidak memiliki akses")
 	}
 
 	billboard, err := GetBillboardFromID(sewa.Billboard.ID, db)
 	if err != nil {
-		return fmt.Errorf("billboard tidak ditemukan")
+		return bson.M{}, fmt.Errorf("billboard tidak ditemukan")
 	}
 
 	if gambar != "" {
@@ -533,7 +563,7 @@ func EditSewa(idparam, iduser primitive.ObjectID, db *mongo.Database, r *http.Re
 	} else {
 		imageUrl, err = intermoni.SaveFileToGithub("Fatwaff", "fax.mp4@gmail.com", "bk-image", "ksi", r)
 		if err != nil {
-			return fmt.Errorf("error save file: %s", err)
+			return bson.M{}, fmt.Errorf("error save file: %s", err)
 		}
 	}
 	data := bson.M{
@@ -550,9 +580,9 @@ func EditSewa(idparam, iduser primitive.ObjectID, db *mongo.Database, r *http.Re
 	}
 	err = UpdateOneDoc(idparam, db, "sewa", data)
 	if err != nil {
-		return err
+		return bson.M{}, err
 	}
-	return nil
+	return data, nil
 }
 
 func HapusSewa(_id, iduser primitive.ObjectID, db *mongo.Database) error {

@@ -14,17 +14,17 @@ func TestGenerateKey(t *testing.T) {
 func TestSignUp(t *testing.T) {
 	conn := MongoConnect("MONGOSTRING", "db_ksi")
 	var user User
-	user.NamaLengkap = "Aidan Woods"
-	user.Email = "aidan@gmail.com"
-	user.Password = "12345678"
+	user.NamaLengkap = "admin"
+	user.Email = "fatwa@gmail.com"
+	user.Password = "fatwafatahillah"
 	user.NoHp = "081234567890"
-	user.Confirmpassword = "12345678"
-	user.KTP = "1234567890123456"
-	err := SignUp(conn, user)
+	user.Confirmpassword = "fatwafatahillah"
+	user.KTP = "89634876269397"
+	email, err  := SignUp(conn, user)
 	if err != nil {
 		fmt.Println(err)
 	} else {
-		fmt.Println("Berhasil SignUp")
+		fmt.Println("Berhasil SignUp : ", email)
 	}
 }
 

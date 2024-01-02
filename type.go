@@ -22,10 +22,11 @@ type Billboard struct {
 	Kode 			string				`bson:"kode,omitempty" json:"kode,omitempty"`
 	Nama 			string 				`bson:"nama,omitempty" json:"nama,omitempty"`
 	Gambar 			string 				`bson:"gambar,omitempty" json:"gambar,omitempty"`
-	Panjang 		float64 			`bson:"panjang,omitempty" json:"panjang,omitempty"`
-	Lebar 			float64 			`bson:"lebar,omitempty" json:"lebar,omitempty"`
-	Latitude  		float64 			`bson:"latitude,omitempty" json:"latitude,omitempty"`
-	Longitude 		float64 			`bson:"longitude,omitempty" json:"longitude,omitempty"`
+	Panjang 		string 				`bson:"panjang,omitempty" json:"panjang,omitempty"`
+	Lebar 			string 				`bson:"lebar,omitempty" json:"lebar,omitempty"`
+	Harga 			string 				`bson:"harga,omitempty" json:"harga,omitempty"`
+	Latitude  		string 				`bson:"latitude,omitempty" json:"latitude,omitempty"`
+	Longitude 		string 				`bson:"longitude,omitempty" json:"longitude,omitempty"`
 	Address 		string 				`bson:"address,omitempty" json:"address,omitempty"`
 	Regency 		string 				`bson:"regency,omitempty" json:"regency,omitempty"`
 	District 		string 				`bson:"district,omitempty" json:"district,omitempty"`
@@ -43,13 +44,13 @@ type Sewa struct {
 }
 
 type Credential struct {
-	Status  bool   `json:"status" bson:"status"`
+	Status  int   `json:"status" bson:"status"`
 	Token   string `json:"token,omitempty" bson:"token,omitempty"`
 	Message string `json:"message,omitempty" bson:"message,omitempty"`
 }
 
 type Response struct {
-	Status  bool   `json:"status" bson:"status"`
+	Status  int   `json:"status" bson:"status"`
 	Message string `json:"message,omitempty" bson:"message,omitempty"`
 }
 
