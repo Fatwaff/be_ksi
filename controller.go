@@ -214,7 +214,7 @@ func LogIn(db *mongo.Database, insertedDoc User) (user User, err error) {
 }
 
 // billboard
-func GetBillboard (db *mongo.Database) (docs []bson.M, err error) {
+func GetBillboard(db *mongo.Database) (docs []bson.M, err error) {
 	billboard, err := GetAllBillboard(db)
 	if err != nil {
 		return docs, err
