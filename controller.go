@@ -140,7 +140,7 @@ func EditProfile(idparam primitive.ObjectID, db *mongo.Database, r *http.Request
 	if gambar != "" {
 		imageUrl = gambar
 	} else {
-		imageUrl, err := intermoni.SaveFileToGithub("Fatwaff", "fax.mp4@gmail.com", "bk-image", "ksi", r)
+		imageUrl, err = intermoni.SaveFileToGithub("Fatwaff", "fax.mp4@gmail.com", "bk-image", "ksi", r)
 		if err != nil {
 			return bson.M{}, fmt.Errorf("error save file: %s", err)
 		}
