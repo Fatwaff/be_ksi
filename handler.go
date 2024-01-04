@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/gofiber/fiber"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
@@ -227,44 +228,46 @@ func TambahBillboardHandler(PASETOPUBLICKEYENV, MONGOCONNSTRINGENV, dbname strin
 	return GCFReturnStruct(responData)
 }
 
-func GetBillboarHandler(MONGOCONNSTRINGENV, dbname string, r *http.Request) string {
+func GetBillboarHandler(MONGOCONNSTRINGENV, dbname string, r *http.Request, c *fiber.Ctx) error {
 	conn := MongoConnect(MONGOCONNSTRINGENV, dbname)
-	response.Status = 400
+	// response.Status = 400
 	//
 	id := GetID(r)
 	if id == "" {
 		data, err := GetBillboard(conn)
 		if err != nil {
-			response.Message = err.Error()
-			return GCFReturnStruct(response)
-		}
-		responData := bson.M{
-			"status":  200,
-			"message": "Get Success",
-			"data":    data,
+			// response.Message = err.Error()
+			return c.Status(http.StatusInternalServerError).JSON(fiber.Map{
+				"status":  http.StatusInternalServerError,
+				"message": "Wrong parameter",
+			})
 		}
 		//
-		return GCFReturnStruct(responData)
+		return c.JSON(fiber.Map{
+			"status": http.StatusOK,
+			"data":   data,
+		})
 	}
 	idparam, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
-		response.Message = err.Error()
-		return GCFReturnStruct(response)
+		// response.Message = err.Error()
+		return c.Status(http.StatusBadRequest).JSON(fiber.Map{
+			"status":  http.StatusBadRequest,
+			"message": "Invalid id parameter",
+		})
 	}
 	billboard, err := GetBillboardFromID(idparam, conn)
 	if err != nil {
 		response.Message = err.Error()
-		return GCFReturnStruct(response)
+		return c.Status(http.StatusNotFound).JSON(fiber.Map{
+			"status":  http.StatusNotFound,
+			"message": response.Message,
+		})
 	}
 	//
-	response.Status = 200
-	response.Message = "Get Success"
-	responData := bson.M{
-		"status":  response.Status,
-		"message": response.Message,
-		"data":    billboard,
-	}
-	return GCFReturnStruct(responData)
+	// response.Status = 200
+	// response.Message = "Get Success"
+	return c.JSON(billboard)
 }
 
 func EditBillboardHandler(PASETOPUBLICKEYENV, MONGOCONNSTRINGENV, dbname string, r *http.Request) string {
