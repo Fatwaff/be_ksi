@@ -372,6 +372,7 @@ func GetBillboard(db *mongo.Database) (docs []bson.M, err error) {
 			"gambar":    b.Gambar,
 			"panjang":   b.Panjang,
 			"lebar":     b.Lebar,
+			"harga":     b.Harga,
 			"latitude":  b.Latitude,
 			"longitude": b.Longitude,
 			"address":   b.Address,
