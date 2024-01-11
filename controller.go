@@ -545,7 +545,7 @@ func HapusBillboardOlehAdmin(_id primitive.ObjectID, db *mongo.Database) error {
 // sewa
 func SewaBillboard(idbilllboard, iduser primitive.ObjectID, db *mongo.Database, r *http.Request) (bson.M, error) {
 	tanggal_mulai := r.FormValue("tanggal_mulai")
-	tanggal_selesai := r.FormValue("tanggal_mulai")
+	tanggal_selesai := r.FormValue("tanggal_selesai")
 
 	if tanggal_mulai == "" || tanggal_selesai == "" {
 		return bson.M{}, fmt.Errorf("mohon untuk melengkapi data")
@@ -673,7 +673,7 @@ func GetAllSewaByUser(iduser primitive.ObjectID, db *mongo.Database) (sewa []Sew
 
 func EditSewa(idparam, iduser primitive.ObjectID, db *mongo.Database, r *http.Request) (bson.M, error) {
 	tanggal_mulai := r.FormValue("tanggal_mulai")
-	tanggal_selesai := r.FormValue("tanggal_mulai")
+	tanggal_selesai := r.FormValue("tanggal_selesai")
 
 	gambar := r.FormValue("file")
 
