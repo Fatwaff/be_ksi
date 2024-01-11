@@ -612,8 +612,15 @@ func GetAllSewa(db *mongo.Database) (sewa []Sewa, err error) {
 		if err != nil {
 			return sewa, fmt.Errorf("user tidak ditemukan")
 		}
+		dataUser := User{
+			ID : user.ID,
+			NamaLengkap : user.NamaLengkap,
+			Email : user.Email,
+			NoHp : user.NoHp,
+			KTP : user.KTP,
+		}
 		s.Billboard = billboard
-		s.User = user
+		s.User = dataUser
 		sewa = append(sewa, s)
 		sewa = sewa[1:]
 	}
@@ -639,7 +646,14 @@ func GetSewaFromID(_id primitive.ObjectID, db *mongo.Database) (sewa Sewa, err e
 		return sewa, fmt.Errorf("user tidak ditemukan")
 	}
 	sewa.Billboard = billboard
-	sewa.User = user
+	dataUser := User{
+		ID : user.ID,
+		NamaLengkap : user.NamaLengkap,
+		Email : user.Email,
+		NoHp : user.NoHp,
+		KTP : user.KTP,
+	}
+	sewa.User = dataUser
 	return sewa, nil
 }
 
@@ -664,7 +678,14 @@ func GetAllSewaByUser(iduser primitive.ObjectID, db *mongo.Database) (sewa []Sew
 			return sewa, fmt.Errorf("user tidak ditemukan")
 		}
 		s.Billboard = billboard
-		s.User = user
+		dataUser := User{
+			ID : user.ID,
+			NamaLengkap : user.NamaLengkap,
+			Email : user.Email,
+			NoHp : user.NoHp,
+			KTP : user.KTP,
+		}
+		s.User = dataUser
 		sewa = append(sewa, s)
 		sewa = sewa[1:]
 	}
