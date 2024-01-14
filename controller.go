@@ -364,6 +364,8 @@ func GetBillboard(db *mongo.Database) (docs []bson.M, err error) {
 	for _, b := range billboard {
 		if CheckSewa(db, b.ID) {
 			booking = true
+		} else {
+			booking = false
 		}
 		data := bson.M{
 			"_id":       b.ID,
