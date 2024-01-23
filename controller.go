@@ -719,6 +719,10 @@ func EditSewa(idparam, iduser primitive.ObjectID, db *mongo.Database, r *http.Re
 		return bson.M{}, fmt.Errorf("kamu tidak memiliki akses")
 	}
 
+	if sewa.Status {
+		return bson.M{}, fmt.Errorf("ga boleh diedit lagi bang, sewanya udah diapprove")
+	}
+
 	billboard, err := GetBillboardFromID(sewa.Billboard.ID, db)
 	if err != nil {
 		return bson.M{}, fmt.Errorf("billboard tidak ditemukan")
@@ -742,7 +746,7 @@ func EditSewa(idparam, iduser primitive.ObjectID, db *mongo.Database, r *http.Re
 		"content":         imageUrl,
 		"tanggal_mulai":   tanggal_mulai,
 		"tanggal_selesai": tanggal_selesai,
-		"bayar":           false,
+		"bayar":           sewa.Bayar,
 		"status":          false,
 	}
 	err = UpdateOneDoc(idparam, db, "sewa", data)
@@ -769,6 +773,9 @@ func HapusSewa(_id, iduser primitive.ObjectID, db *mongo.Database) error {
 
 func BayarSewa(_id, iduser primitive.ObjectID, db *mongo.Database, insertedDoc Billboard) (bson.M, error) {
 	sewa, err := GetSewaFromID(_id, db)
+	if insertedDoc.Harga == "" {
+		return bson.M{}, fmt.Errorf("bayar weh, malah ga diisi apa-apa")
+	}
 	if err != nil {
 		return bson.M{}, fmt.Errorf("sewa tidak ditemukan")
 	}
