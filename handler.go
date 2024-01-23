@@ -13,6 +13,7 @@ var (
 	credential Credential
 	response   Response
 	user       User
+	billboard  Billboard
 	password   Password
 )
 
@@ -454,6 +455,43 @@ func EditSewaHandler(PASETOPUBLICKEYENV, MONGOCONNSTRINGENV, dbname string, r *h
 	if err != nil {
 		response.Message = "Invalid id parameter"
 		return GCFReturnStruct(response)
+	}
+	if user.Email != "admin@gmail.com" {
+		data, err := ApproveSewa(idparam, conn)
+		if err != nil {
+			response.Message = err.Error()
+			return GCFReturnStruct(response)
+		}
+		//
+		response.Status = 200
+		response.Message = "Berhasil approve sewa"
+		responData := bson.M{
+			"status":  response.Status,
+			"message": response.Message,
+			"data":    data,
+		}
+		return GCFReturnStruct(responData)
+	}
+	if  r.URL.Path == "/bayar" {
+		err = json.NewDecoder(r.Body).Decode(&billboard)
+		if err != nil {
+			response.Message = "error parsing application/json: " + err.Error()
+			return GCFReturnStruct(response)
+		}
+		data, err := BayarSewa(idparam, user.Id, conn, billboard)
+		if err != nil {
+			response.Message = err.Error()
+			return GCFReturnStruct(response)
+		}
+		//
+		response.Status = 200
+		response.Message = "Berhasil bayar sewa"
+		responData := bson.M{
+			"status":  response.Status,
+			"message": response.Message,
+			"data":    data,
+		}
+		return GCFReturnStruct(responData)
 	}
 	data, err := EditSewa(idparam, user.Id, conn, r)
 	if err != nil {

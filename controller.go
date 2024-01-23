@@ -578,6 +578,7 @@ func SewaBillboard(idbilllboard, iduser primitive.ObjectID, db *mongo.Database, 
 		"content":         imageUrl,
 		"tanggal_mulai":   tanggal_mulai,
 		"tanggal_selesai": tanggal_selesai,
+		"bayar":           false,
 		"status":          false,
 	}
 	_, err = InsertOneDoc(db, "sewa", sewa)
@@ -741,6 +742,7 @@ func EditSewa(idparam, iduser primitive.ObjectID, db *mongo.Database, r *http.Re
 		"content":         imageUrl,
 		"tanggal_mulai":   tanggal_mulai,
 		"tanggal_selesai": tanggal_selesai,
+		"bayar":           false,
 		"status":          false,
 	}
 	err = UpdateOneDoc(idparam, db, "sewa", data)
@@ -763,4 +765,84 @@ func HapusSewa(_id, iduser primitive.ObjectID, db *mongo.Database) error {
 		return err
 	}
 	return nil
+}
+
+func BayarSewa(_id, iduser primitive.ObjectID, db *mongo.Database, insertedDoc Billboard) (bson.M, error) {
+	sewa, err := GetSewaFromID(_id, db)
+	if err != nil {
+		return bson.M{}, fmt.Errorf("sewa tidak ditemukan")
+	}
+	user, err := GetUserFromID(iduser, db)
+	if err != nil {
+		return bson.M{}, fmt.Errorf("user tidak ditemukan")
+	}
+	billboard, err := GetBillboardFromID(sewa.Billboard.ID, db)
+	if err != nil {
+		return bson.M{}, fmt.Errorf("billboard tidak ditemukan")
+	}
+	if sewa.User.ID != user.ID {
+		return bson.M{}, fmt.Errorf("kamu tidak memiliki akses")
+	}
+	if sewa.Bayar {
+		return bson.M{}, fmt.Errorf("sewa sudah dibayar")
+	}
+	if sewa.Status {
+		return bson.M{}, fmt.Errorf("udah diapprove kok mau bayar lagi")
+	}
+	if insertedDoc.Harga != billboard.Harga {
+		return bson.M{}, fmt.Errorf("harga tidak sesuai")
+	}
+	data := bson.M{
+		"billboard": bson.M{
+			"_id": billboard.ID,
+		},
+		"user": bson.M{
+			"_id": user.ID,
+		},
+		"content":         sewa.Content,
+		"tanggal_mulai":   sewa.TanggalMulai,
+		"tanggal_selesai": sewa.TanggalSelesai,
+		"bayar":           true,
+		"status":          false,
+	}
+	err = UpdateOneDoc(_id, db, "sewa", data)
+	if err != nil {
+		return bson.M{}, err
+	}
+	return data, nil
+}
+
+func ApproveSewa(_id primitive.ObjectID, db *mongo.Database) (bson.M, error) {
+	sewa, err := GetSewaFromID(_id, db)
+	if err != nil {
+		return bson.M{}, fmt.Errorf("sewa tidak ditemukan")
+	}
+	billboard, err := GetBillboardFromID(sewa.Billboard.ID, db)
+	if err != nil {
+		return bson.M{}, fmt.Errorf("billboard tidak ditemukan")
+	}
+	if !sewa.Bayar {
+		return bson.M{}, fmt.Errorf("belum dibayar kok mau diapprove")
+	}
+	if sewa.Status {
+		return bson.M{}, fmt.Errorf("udah diapprove kok mau approve lagi")
+	}
+	data := bson.M{
+		"billboard": bson.M{
+			"_id": billboard.ID,
+		},
+		"user": bson.M{
+			"_id": sewa.User.ID,
+		},
+		"content":         sewa.Content,
+		"tanggal_mulai":   sewa.TanggalMulai,
+		"tanggal_selesai": sewa.TanggalSelesai,
+		"bayar":           sewa.Bayar,
+		"status":          true,
+	}
+	err = UpdateOneDoc(_id, db, "sewa", data)
+	if err != nil {
+		return bson.M{}, err
+	}
+	return data, nil
 }

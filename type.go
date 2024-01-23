@@ -47,6 +47,7 @@ type Sewa struct {
 	Content        string             `bson:"content,omitempty" json:"content,omitempty"`
 	TanggalMulai   string             `bson:"tanggal_mulai,omitempty" json:"tanggal_mulai,omitempty"`
 	TanggalSelesai string             `bson:"tanggal_selesai,omitempty" json:"tanggal_selesai,omitempty"`
+	Bayar          bool               `bson:"bayar,omitempty" json:"bayar,omitempty"`
 	Status         bool               `bson:"status,omitempty" json:"status,omitempty"`
 }
 
