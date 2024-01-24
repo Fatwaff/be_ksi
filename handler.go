@@ -456,7 +456,7 @@ func EditSewaHandler(PASETOPUBLICKEYENV, MONGOCONNSTRINGENV, dbname string, r *h
 		response.Message = "Invalid id parameter"
 		return GCFReturnStruct(response)
 	}
-	if user.Email != "admin@gmail.com" {
+	if user.Email == "admin@gmail.com" {
 		data, err := ApproveSewa(idparam, conn)
 		if err != nil {
 			response.Message = err.Error()
